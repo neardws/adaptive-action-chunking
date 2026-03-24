@@ -75,10 +75,11 @@ def obs_to_batch(obs, task_lang: str, device: str):
             img = F.interpolate(img.unsqueeze(0), size=(224, 224), mode="bilinear").squeeze(0)
         return img.unsqueeze(0).to(device)
 
+    # pi0fast-libero image keys (from config.input_features)
     batch = {
-        "observation.images.base_0_rgb": img_tensor("agentview_image"),
-        "observation.images.left_wrist_0_rgb": img_tensor("robot0_eye_in_hand_image"),
-        "observation.images.right_wrist_0_rgb": img_tensor("robot0_robotview_image"),
+        "observation.images.image": img_tensor("agentview_image"),
+        "observation.images.image2": img_tensor("robot0_eye_in_hand_image"),
+        "observation.images.empty_camera_0": img_tensor("robot0_robotview_image"),
     }
 
     # Robot state (fixed ordering, pad to 32)
@@ -112,8 +113,9 @@ def run_episode(env, policy_wrapper, task_lang, k, device, max_steps=600):
 
     while not done and step < max_steps:
         batch = obs_to_batch(obs, task_lang, device)
+        img_dict = {key: val for key, val in batch.items() if "observation.images" in key}
         actions, latency = policy_wrapper.infer(
-            images={k: v for k, v in batch.items() if "images" in k},
+            images=img_dict,
             state=batch["observation.state"],
             task=task_lang,
             k=k,
@@ -153,7 +155,7 @@ def run_adaptive_episode(env, policy_wrapper, k_selector, task_lang, device, max
         batch = obs_to_batch(obs, task_lang, device)
 
         # Get features for k prediction
-        img_dict = {k: v for k, v in batch.items() if "images" in k}
+        img_dict = {key: val for key, val in batch.items() if "observation.images" in key}
         features = policy_wrapper.get_siglip_features(img_dict)
         state = batch["observation.state"]
         k = k_selector.predict_k(features, state)[0]
@@ -235,7 +237,7 @@ def main():
             ep_results = []
             for tid in task_ids:
                 env, task_lang = make_env(args.tasks, tid)
-                for _ in range(args.n_episodes // len(task_ids)):
+                for _ in range(max(1, args.n_episodes // len(task_ids))):
                     r = run_episode(env, policy, task_lang, k, args.device, args.max_steps)
                     ep_results.append(r)
                 env.close()
@@ -253,7 +255,7 @@ def main():
         ep_results = []
         for tid in task_ids:
             env, task_lang = make_env(args.tasks, tid)
-            for _ in range(args.n_episodes // len(task_ids)):
+            for _ in range(max(1, args.n_episodes // len(task_ids))):
                 r = run_adaptive_episode(env, policy, selector, task_lang, args.device, args.max_steps)
                 ep_results.append(r)
             env.close()

@@ -52,7 +52,7 @@ def main():
 
             while not done and step < 600:
                 batch = obs_to_batch(obs, task_lang, args.device)
-                img_dict = {k: v for k, v in batch.items() if "images" in k}
+                img_dict = {k: v for k, v in batch.items() if "observation.images" in k}
 
                 # Extract features
                 features = policy.get_siglip_features(img_dict).squeeze(0).cpu().numpy()

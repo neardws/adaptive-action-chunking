@@ -74,21 +74,17 @@ class Pi0FastWrapper:
         assert self._policy is not None, "Call .load() first"
         batch = self._build_batch(images, state, task)
 
-        self._policy.config.n_action_steps = k
-        self._policy.reset()
-
+        # Use predict_action_chunk to get k actions in one forward pass
+        # Returns [B, chunk_size, action_dim]; we take first k steps
         torch.cuda.synchronize(self.device)
         t0 = time.perf_counter()
         with torch.inference_mode():
-            # Collect k actions from the queue
-            actions = []
-            for _ in range(k):
-                a = self._policy.select_action(batch)
-                actions.append(a)
+            action_chunk = self._policy.predict_action_chunk(batch)  # [B, chunk_size, 7]
         torch.cuda.synchronize(self.device)
         latency_ms = (time.perf_counter() - t0) * 1000
 
-        actions = torch.stack(actions, dim=0)  # [k, action_dim]
+        # action_chunk: [B, chunk_size, 7] → take first k steps → [k, 7]
+        actions = action_chunk[0, :k, :]  # [k, action_dim]
         return actions, latency_ms
 
     def get_siglip_features(self, images: dict[str, torch.Tensor]) -> torch.Tensor:
