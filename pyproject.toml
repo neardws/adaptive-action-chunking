@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "adaptive-action-chunking"
+version = "0.1.0"
+description = "Adaptive Action Chunking for Edge VLA Real-Time Control"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.5.0",
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "Pillow>=10.0",
+    "huggingface_hub>=0.34",
+    "lerobot",
+    "pyyaml",
+    "tqdm",
+    "wandb",
+]
+
+[project.optional-dependencies]
+pi = ["lerobot[pi]"]
+libero = ["lerobot[libero]"]
+dev = ["pytest", "black", "ruff"]

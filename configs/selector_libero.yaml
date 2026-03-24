@@ -1,0 +1,29 @@
+# k-Selector training config for LIBERO benchmark
+
+model:
+  name: "KSelectorMLP"
+  feature_dim: 1152       # SigLIP-400M hidden dim
+  state_dim: 32           # robot state dim (pi0fast default)
+  hidden_dims: [128, 64]
+  k_candidates: [1, 2, 4, 8, 16]
+
+training:
+  lr: 1e-4
+  batch_size: 64
+  epochs: 50
+  warmup_steps: 500
+
+data:
+  oracle_episodes: 100    # episodes with k=1 for oracle labeling
+  tasks:
+    - libero_spatial
+    - libero_object
+    - libero_goal
+
+eval:
+  n_episodes: 50
+  fixed_k_baselines: [1, 4, 8, 16]
+  metrics:
+    - success_rate
+    - mean_latency_ms
+    - p90_latency_ms

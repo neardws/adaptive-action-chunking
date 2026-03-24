@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.env
+venv/
+.venv/
+
+# Data / Models
+*.safetensors
+*.gguf
+*.bin
+*.pt
+*.pth
+checkpoints/
+data/
+wandb/
+
+# Results (keep JSON summaries, not raw logs)
+experiments/runs/
+*.log
+
+# System
+.DS_Store
+*.swp
